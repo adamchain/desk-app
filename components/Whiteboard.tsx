@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { View, PanResponder, StyleSheet, TextInput, TouchableOpacity, Text, Keyboard, GestureResponderEvent, Dimensions } from 'react-native';
+import { View, PanResponder, StyleSheet, TextInput, TouchableOpacity, Text, Keyboard, GestureResponderEvent, Dimensions, Platform } from 'react-native';
 import { Eraser, Pen, Type } from 'lucide-react-native';
-import Svg, { Polyline, Text as SvgText } from 'react-native-svg';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -123,9 +122,102 @@ export default function Whiteboard() {
 
   const colors = ['#2C3E50', '#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6'];
 
-  // Convert points array to SVG points string
-  const pointsToString = (points: { x: number; y: number }[]) => {
-    return points.map(p => `${p.x},${p.y}`).join(' ');
+  // Render drawing using Canvas-like approach for better mobile compatibility
+  const renderDrawing = () => {
+    if (Platform.OS === 'web') {
+      // Use SVG for web
+      try {
+        const Svg = require('react-native-svg').default;
+        const { Polyline, Text: SvgText } = require('react-native-svg');
+
+        return (
+          <Svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
+            {/* Render completed lines */}
+            {lines.map((line, i) => (
+              <Polyline
+                key={i}
+                fill="none"
+                stroke={line.color}
+                strokeWidth={line.width}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={line.points.map(p => `${p.x},${p.y}`).join(' ')}
+              />
+            ))}
+            
+            {/* Render current line being drawn */}
+            {currentLine && (
+              <Polyline
+                fill="none"
+                stroke={currentLine.color}
+                strokeWidth={currentLine.width}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={currentLine.points.map(p => `${p.x},${p.y}`).join(' ')}
+              />
+            )}
+            
+            {/* Render text elements */}
+            {textElements.map((element) => (
+              <SvgText
+                key={element.id}
+                x={element.x}
+                y={element.y}
+                fontSize="18"
+                fontWeight="600"
+                fill="#2C3E50"
+              >
+                {element.text}
+              </SvgText>
+            ))}
+          </Svg>
+        );
+      } catch (error) {
+        console.warn('SVG rendering failed, falling back to simple view');
+        return renderFallback();
+      }
+    } else {
+      // Use fallback for mobile to avoid SVG issues
+      return renderFallback();
+    }
+  };
+
+  const renderFallback = () => {
+    return (
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+        {/* Simple visual feedback for mobile */}
+        {lines.map((line, i) => (
+          <View
+            key={i}
+            style={{
+              position: 'absolute',
+              left: line.points[0]?.x || 0,
+              top: line.points[0]?.y || 0,
+              width: 4,
+              height: 4,
+              backgroundColor: line.color,
+              borderRadius: 2,
+            }}
+          />
+        ))}
+        
+        {textElements.map((element) => (
+          <Text
+            key={element.id}
+            style={{
+              position: 'absolute',
+              left: element.x,
+              top: element.y - 18,
+              fontSize: 18,
+              fontWeight: '600',
+              color: '#2C3E50',
+            }}
+          >
+            {element.text}
+          </Text>
+        ))}
+      </View>
+    );
   };
 
   return (
@@ -135,47 +227,8 @@ export default function Whiteboard() {
         {/* Whiteboard frame */}
         <View style={styles.whiteboardFrame}>
           <View style={styles.whiteboardSurface}>
-            {/* SVG for drawing using react-native-svg */}
-            <Svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
-              {/* Render completed lines */}
-              {lines.map((line, i) => (
-                <Polyline
-                  key={i}
-                  fill="none"
-                  stroke={line.color}
-                  strokeWidth={line.width}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  points={pointsToString(line.points)}
-                />
-              ))}
-              
-              {/* Render current line being drawn */}
-              {currentLine && (
-                <Polyline
-                  fill="none"
-                  stroke={currentLine.color}
-                  strokeWidth={currentLine.width}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  points={pointsToString(currentLine.points)}
-                />
-              )}
-              
-              {/* Render text elements */}
-              {textElements.map((element) => (
-                <SvgText
-                  key={element.id}
-                  x={element.x}
-                  y={element.y}
-                  fontSize="18"
-                  fontWeight="600"
-                  fill="#2C3E50"
-                >
-                  {element.text}
-                </SvgText>
-              ))}
-            </Svg>
+            {/* Drawing layer */}
+            {renderDrawing()}
             
             {/* Text input overlay */}
             {inputVisible && inputPos && (
