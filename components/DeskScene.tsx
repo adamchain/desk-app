@@ -258,14 +258,15 @@ export default function DeskScene() {
     setDeskFolders(prev => [...prev, newFolder]);
   }, [deskWidth, deskHeight, getNextZIndex]);
 
-  // Register add functions with context
+  // Register add functions with context - only run once
   const deskActions = useContext(DeskActionsContext);
   useEffect(() => {
-    if (!deskActions) return;
-    if (deskActions.setAddFile) deskActions.setAddFile(addNewFile);
-    if (deskActions.setAddFolder) deskActions.setAddFolder(addNewFolder);
-    if (deskActions.setAddSticky) deskActions.setAddSticky(addStickyNote);
-  }, [deskActions, addNewFile, addNewFolder, addStickyNote]);
+    if (deskActions?.setAddFile && deskActions?.setAddFolder && deskActions?.setAddSticky) {
+      deskActions.setAddFile(addNewFile);
+      deskActions.setAddFolder(addNewFolder);
+      deskActions.setAddSticky(addStickyNote);
+    }
+  }, []); // Empty dependency array - only run once
 
   const handleFolderPress = useCallback((folder: DeskFolderData) => {
     setSelectedFolder(folder);
