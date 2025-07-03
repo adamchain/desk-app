@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Notepad from './Notepad';
@@ -258,16 +258,6 @@ export default function DeskScene() {
     setDeskFolders(prev => [...prev, newFolder]);
   }, [deskWidth, deskHeight, getNextZIndex]);
 
-  // Register add functions with context - only run once
-  const deskActions = useContext(DeskActionsContext);
-  useEffect(() => {
-    if (deskActions?.setAddFile && deskActions?.setAddFolder && deskActions?.setAddSticky) {
-      deskActions.setAddFile(addNewFile);
-      deskActions.setAddFolder(addNewFolder);
-      deskActions.setAddSticky(addStickyNote);
-    }
-  }, []); // Empty dependency array - only run once
-
   const handleFolderPress = useCallback((folder: DeskFolderData) => {
     setSelectedFolder(folder);
   }, []);
@@ -301,138 +291,147 @@ export default function DeskScene() {
     setLongTermFiles(prev => [file, ...prev]);
   }, []);
 
+  // Context value with the add functions
+  const contextValue = {
+    addFile: addNewFile,
+    addFolder: addNewFolder,
+    addSticky: addStickyNote,
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Whiteboard - Top half */}
-      <View style={[styles.whiteboardContainer, { height: whiteboardHeight }]}>
-        <Whiteboard />
-      </View>
+    <DeskActionsContext.Provider value={contextValue}>
+      <View style={styles.container}>
+        {/* Whiteboard - Top half */}
+        <View style={[styles.whiteboardContainer, { height: whiteboardHeight }]}>
+          <Whiteboard />
+        </View>
 
-      {/* Desk - Bottom half */}
-      <View style={[styles.deskContainer, { height: deskHeight }]}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={Platform.OS !== 'web'}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ width: deskWidth }}
-          style={styles.deskScrollView}
-        >
-          <View style={[styles.deskSurface, { width: deskWidth, height: deskHeight - 20 }]}>
-            {/* File Cabinet - Fixed position on left */}
-            <View style={styles.cabinetContainer}>
-              <FileCabinet onPress={() => setShowFileCabinet(true)} />
+        {/* Desk - Bottom half */}
+        <View style={[styles.deskContainer, { height: deskHeight }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={Platform.OS !== 'web'}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ width: deskWidth }}
+            style={styles.deskScrollView}
+          >
+            <View style={[styles.deskSurface, { width: deskWidth, height: deskHeight - 20 }]}>
+              {/* File Cabinet - Fixed position on left */}
+              <View style={styles.cabinetContainer}>
+                <FileCabinet onPress={() => setShowFileCabinet(true)} />
+              </View>
+
+              {/* Pen - Fixed position */}
+              <View style={styles.penContainer}>
+                <Pen onPress={addStickyNote} />
+              </View>
+
+              {/* Draggable Items */}
+              {stickyNotes.map(note => (
+                <StickyNote
+                  key={`sticky-${note.id}`}
+                  note={note}
+                  onUpdate={updateStickyNote}
+                  onDelete={deleteStickyNote}
+                  bounds={deskBounds}
+                />
+              ))}
+
+              {deskFiles.map(file => (
+                <DeskFile
+                  key={`file-${file.id}`}
+                  file={file}
+                  onUpdate={updateDeskFile}
+                  onDelete={deleteDeskFile}
+                  bounds={deskBounds}
+                />
+              ))}
+
+              {deskFolders.map(folder => (
+                <DeskFolder
+                  key={`folder-${folder.id}`}
+                  folder={folder}
+                  onUpdate={updateDeskFolder}
+                  onDelete={deleteDeskFolder}
+                  onPress={handleFolderPress}
+                  bounds={deskBounds}
+                />
+              ))}
+
+              {tornPages.map(page => (
+                <TornPage
+                  key={`page-${page.id}`}
+                  page={page}
+                  onUpdate={updateTornPage}
+                  onDelete={deleteTornPage}
+                  bounds={deskBounds}
+                />
+              ))}
+
+              <Notepad
+                notepad={notepad}
+                onUpdate={updateNotepad}
+                onTearPage={addTornPage}
+                bounds={deskBounds}
+              />
+
+              <FileTray
+                fileTray={fileTray}
+                onUpdate={updateFileTray}
+                onPress={() => setShowFileTray(true)}
+                isDropTarget={isDragging}
+                onDrop={handleFileDrop}
+                bounds={deskBounds}
+              />
+
+              {/* Add Button */}
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => setShowAddModal(true)}
+              >
+                <MaterialIcons name="add" size={24} color="#FFF" />
+              </TouchableOpacity>
             </View>
+          </ScrollView>
+        </View>
 
-            {/* Pen - Fixed position */}
-            <View style={styles.penContainer}>
-              <Pen onPress={addStickyNote} />
-            </View>
-
-            {/* Draggable Items */}
-            {stickyNotes.map(note => (
-              <StickyNote
-                key={`sticky-${note.id}`}
-                note={note}
-                onUpdate={updateStickyNote}
-                onDelete={deleteStickyNote}
-                bounds={deskBounds}
-              />
-            ))}
-
-            {deskFiles.map(file => (
-              <DeskFile
-                key={`file-${file.id}`}
-                file={file}
-                onUpdate={updateDeskFile}
-                onDelete={deleteDeskFile}
-                bounds={deskBounds}
-              />
-            ))}
-
-            {deskFolders.map(folder => (
-              <DeskFolder
-                key={`folder-${folder.id}`}
-                folder={folder}
-                onUpdate={updateDeskFolder}
-                onDelete={deleteDeskFolder}
-                onPress={handleFolderPress}
-                bounds={deskBounds}
-              />
-            ))}
-
-            {tornPages.map(page => (
-              <TornPage
-                key={`page-${page.id}`}
-                page={page}
-                onUpdate={updateTornPage}
-                onDelete={deleteTornPage}
-                bounds={deskBounds}
-              />
-            ))}
-
-            <Notepad
-              notepad={notepad}
-              onUpdate={updateNotepad}
-              onTearPage={addTornPage}
-              bounds={deskBounds}
-            />
-
-            <FileTray
-              fileTray={fileTray}
-              onUpdate={updateFileTray}
-              onPress={() => setShowFileTray(true)}
-              isDropTarget={isDragging}
-              onDrop={handleFileDrop}
-              bounds={deskBounds}
-            />
-
-            {/* Add Button */}
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => setShowAddModal(true)}
-            >
-              <MaterialIcons name="add" size={24} color="#FFF" />
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-
-      {/* Modals */}
-      <FileModal
-        visible={showFileTray}
-        title="File Tray - Quick Access"
-        files={fileTray.files}
-        onClose={() => setShowFileTray(false)}
-        onFileImported={handleFileImported}
-        allowImport={true}
-      />
-
-      <FileModal
-        visible={showFileCabinet}
-        title="File Cabinet - Long-Term Storage"
-        files={longTermFiles}
-        onClose={() => setShowFileCabinet(false)}
-        onFileImported={handleLongTermFileImported}
-        allowImport={true}
-      />
-
-      {selectedFolder && (
+        {/* Modals */}
         <FileModal
-          visible={!!selectedFolder}
-          title={selectedFolder.name}
-          files={selectedFolder.files}
-          onClose={() => setSelectedFolder(null)}
+          visible={showFileTray}
+          title="File Tray - Quick Access"
+          files={fileTray.files}
+          onClose={() => setShowFileTray(false)}
+          onFileImported={handleFileImported}
+          allowImport={true}
         />
-      )}
 
-      <AddItemModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onAddFile={addNewFile}
-        onAddFolder={addNewFolder}
-        onAddStickyNote={addStickyNote}
-      />
-    </View>
+        <FileModal
+          visible={showFileCabinet}
+          title="File Cabinet - Long-Term Storage"
+          files={longTermFiles}
+          onClose={() => setShowFileCabinet(false)}
+          onFileImported={handleLongTermFileImported}
+          allowImport={true}
+        />
+
+        {selectedFolder && (
+          <FileModal
+            visible={!!selectedFolder}
+            title={selectedFolder.name}
+            files={selectedFolder.files}
+            onClose={() => setSelectedFolder(null)}
+          />
+        )}
+
+        <AddItemModal
+          visible={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onAddFile={addNewFile}
+          onAddFolder={addNewFolder}
+          onAddStickyNote={addStickyNote}
+        />
+      </View>
+    </DeskActionsContext.Provider>
   );
 }
 

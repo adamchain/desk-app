@@ -1,39 +1,31 @@
 import { Tabs } from 'expo-router';
 import { Chrome as Home, Plus, Settings } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import AddItemModal from '../../components/AddItemModal';
-import { DeskActionsContext } from '../../components/DeskActionsContext';
+import { useDeskActions } from '../../components/DeskActionsContext';
 
 export default function TabsLayout() {
   const [showAddModal, setShowAddModal] = useState(false);
+  const { addFile, addFolder, addSticky } = useDeskActions();
 
-  // These will be replaced by context values from DeskScene
-  const [addFile, setAddFile] = useState<(name: string, type: string) => void>(() => () => { });
-  const [addFolder, setAddFolder] = useState<(name: string) => void>(() => () => { });
-  const [addSticky, setAddSticky] = useState<() => void>(() => () => { });
+  const handleAddFile = (name: string, type: string) => {
+    addFile(name, type);
+    setShowAddModal(false);
+  };
 
-  // These setters will be called by DeskScene to register the real add functions
-  const contextValue = useMemo(() => ({
-    addFile: (name: string, type: string) => {
-      addFile(name, type);
-      setShowAddModal(false);
-    },
-    addFolder: (name: string) => {
-      addFolder(name);
-      setShowAddModal(false);
-    },
-    addSticky: () => {
-      addSticky();
-      setShowAddModal(false);
-    },
-    setAddFile,
-    setAddFolder,
-    setAddSticky,
-  }), [addFile, addFolder, addSticky]);
+  const handleAddFolder = (name: string) => {
+    addFolder(name);
+    setShowAddModal(false);
+  };
+
+  const handleAddSticky = () => {
+    addSticky();
+    setShowAddModal(false);
+  };
 
   return (
-    <DeskActionsContext.Provider value={contextValue}>
+    <>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -90,10 +82,10 @@ export default function TabsLayout() {
       <AddItemModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onAddFile={contextValue.addFile}
-        onAddFolder={contextValue.addFolder}
-        onAddStickyNote={contextValue.addSticky}
+        onAddFile={handleAddFile}
+        onAddFolder={handleAddFolder}
+        onAddStickyNote={handleAddSticky}
       />
-    </DeskActionsContext.Provider>
+    </>
   );
 }
