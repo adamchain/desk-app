@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { View, PanResponder, StyleSheet, TextInput, TouchableOpacity, Text, Keyboard, GestureResponderEvent, Dimensions } from 'react-native';
 import { Eraser, Pen, Type } from 'lucide-react-native';
+import Svg, { Polyline, Text as SvgText } from 'react-native-svg';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -122,6 +123,11 @@ export default function Whiteboard() {
 
   const colors = ['#2C3E50', '#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6'];
 
+  // Convert points array to SVG points string
+  const pointsToString = (points: { x: number; y: number }[]) => {
+    return points.map(p => `${p.x},${p.y}`).join(' ');
+  };
+
   return (
     <View style={styles.container}>
       {/* Whiteboard */}
@@ -129,48 +135,47 @@ export default function Whiteboard() {
         {/* Whiteboard frame */}
         <View style={styles.whiteboardFrame}>
           <View style={styles.whiteboardSurface}>
-            {/* SVG for drawing */}
-            <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
+            {/* SVG for drawing using react-native-svg */}
+            <Svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
               {/* Render completed lines */}
               {lines.map((line, i) => (
-                <polyline
+                <Polyline
                   key={i}
                   fill="none"
                   stroke={line.color}
                   strokeWidth={line.width}
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  points={line.points.map((p) => `${p.x},${p.y}`).join(' ')}
+                  points={pointsToString(line.points)}
                 />
               ))}
               
               {/* Render current line being drawn */}
               {currentLine && (
-                <polyline
+                <Polyline
                   fill="none"
                   stroke={currentLine.color}
                   strokeWidth={currentLine.width}
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  points={currentLine.points.map((p) => `${p.x},${p.y}`).join(' ')}
+                  points={pointsToString(currentLine.points)}
                 />
               )}
               
               {/* Render text elements */}
               {textElements.map((element) => (
-                <text
+                <SvgText
                   key={element.id}
                   x={element.x}
                   y={element.y}
                   fontSize="18"
                   fontWeight="600"
                   fill="#2C3E50"
-                  style={{ userSelect: 'none' }}
                 >
                   {element.text}
-                </text>
+                </SvgText>
               ))}
-            </svg>
+            </Svg>
             
             {/* Text input overlay */}
             {inputVisible && inputPos && (
