@@ -103,22 +103,23 @@ export default function DeskScene() {
   const isWeb = Platform.OS === 'web';
   const isMobile = !isWeb;
   
-  // For mobile: make content wider to enable horizontal scrolling
-  // For web: use full screen width
-  const contentWidth = isMobile ? screenWidth * 1.8 : screenWidth - 40;
-  const whiteboardWidth = isMobile ? contentWidth * 0.5 : contentWidth;
-  const deskWidth = isMobile ? contentWidth * 0.5 : contentWidth;
+  // For mobile: make desk much wider to simulate a real desk experience
+  // For web: use full screen width with vertical layout
+  const whiteboardWidth = isMobile ? screenWidth * 0.9 : screenWidth - 40;
+  const deskWidth = isMobile ? screenWidth * 2.5 : screenWidth - 40; // Much wider on mobile
+  const totalContentWidth = isMobile ? deskWidth + 40 : screenWidth;
   
   // Heights
-  const whiteboardHeight = isMobile ? screenHeight * 0.4 : 180;
-  const deskHeight = isMobile ? screenHeight * 0.4 : 260;
+  const whiteboardHeight = isMobile ? screenHeight * 0.35 : 180;
+  const deskHeight = isMobile ? screenHeight * 0.45 : 260;
   
   // Positioning
   const whiteboardX = 20;
-  const deskX = isMobile ? whiteboardWidth + 40 : 20;
-  const topMargin = isMobile ? 60 : Math.floor(screenHeight * 0.1);
+  const whiteboardY = isMobile ? 60 : Math.floor(screenHeight * 0.1);
+  const deskX = 20;
+  const deskY = isMobile ? whiteboardY + whiteboardHeight + 20 : whiteboardY + whiteboardHeight + 20;
 
-  // Bounds for desk items
+  // Bounds for desk items - much wider on mobile
   const deskBounds = {
     minX: 0,
     maxX: deskWidth - 80,
@@ -143,11 +144,14 @@ export default function DeskScene() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            width: isMobile ? contentWidth + 40 : '100%',
+            width: totalContentWidth,
             minHeight: screenHeight,
           }
         ]}
         bounces={false}
+        decelerationRate="normal"
+        snapToInterval={isMobile ? screenWidth : undefined}
+        snapToAlignment="start"
       >
         {/* Whiteboard Section */}
         <View
@@ -156,7 +160,7 @@ export default function DeskScene() {
             {
               position: 'absolute',
               left: whiteboardX,
-              top: topMargin,
+              top: whiteboardY,
               width: whiteboardWidth,
               height: whiteboardHeight,
             }
@@ -172,23 +176,48 @@ export default function DeskScene() {
             {
               position: 'absolute',
               left: deskX,
-              top: topMargin + (isMobile ? 0 : whiteboardHeight + 20),
+              top: deskY,
               width: deskWidth,
               height: deskHeight,
             },
           ]}
         >
-          {/* File Cabinet - Fixed position */}
-          <View style={styles.cabinetContainer}>
+          {/* File Cabinet - Fixed position on left side */}
+          <View style={[styles.cabinetContainer, { left: 20 }]}>
             <FileCabinet onPress={() => setShowFileCabinet(true)} />
           </View>
 
-          {/* Pen - Fixed position */}
-          <View style={styles.penContainer}>
+          {/* Pen - Positioned in left-center area */}
+          <View style={[styles.penContainer, { left: 180, top: 60 }]}>
             <Pen onPress={addSticky} />
           </View>
 
-          {/* Draggable Items */}
+          {/* File Tray - Positioned on right side of desk */}
+          <FileTray
+            fileTray={{
+              ...fileTray,
+              x: deskWidth - 180, // Position on right side
+              y: 40,
+            }}
+            onUpdate={updateFileTray}
+            onPress={() => setShowFileTray(true)}
+            isDropTarget={false}
+            onDrop={handleFileDrop}
+          />
+
+          {/* Notepad - Positioned in left area */}
+          <Notepad
+            notepad={{
+              ...notepad,
+              x: 60,
+              y: 40,
+            }}
+            onUpdate={updateNotepad}
+            onTearPage={addTornPage}
+            bounds={deskBounds}
+          />
+
+          {/* Draggable Items - spread across the wider desk */}
           {stickyNotes.map(note => (
             <StickyNote
               key={`sticky-${note.id}`}
@@ -230,24 +259,9 @@ export default function DeskScene() {
             />
           ))}
 
-          <Notepad
-            notepad={notepad}
-            onUpdate={updateNotepad}
-            onTearPage={addTornPage}
-            bounds={deskBounds}
-          />
-
-          <FileTray
-            fileTray={fileTray}
-            onUpdate={updateFileTray}
-            onPress={() => setShowFileTray(true)}
-            isDropTarget={false}
-            onDrop={handleFileDrop}
-          />
-
-          {/* Add Button */}
+          {/* Add Button - positioned in center-right area */}
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, { right: 200 }]}
             onPress={() => setShowAddModal(true)}
           >
             <MaterialIcons name="add" size={24} color="#FFF" />
@@ -257,7 +271,7 @@ export default function DeskScene() {
         {/* Mobile scroll indicator */}
         {isMobile && (
           <View style={styles.scrollIndicator}>
-            <Text style={styles.scrollIndicatorText}>← Swipe to explore →</Text>
+            <Text style={styles.scrollIndicatorText}>← Scroll to explore your desk →</Text>
           </View>
         )}
       </ScrollView>
@@ -298,19 +312,15 @@ const styles = StyleSheet.create({
   cabinetContainer: {
     position: 'absolute',
     bottom: 40,
-    left: 20,
     zIndex: 300,
   },
   penContainer: {
     position: 'absolute',
-    top: 60,
-    left: 60,
     zIndex: 300,
   },
   addButton: {
     position: 'absolute',
     bottom: 20,
-    right: 20,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -326,7 +336,7 @@ const styles = StyleSheet.create({
   },
   scrollIndicator: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 120,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -335,10 +345,15 @@ const styles = StyleSheet.create({
   scrollIndicatorText: {
     fontSize: 12,
     color: '#8B4513',
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
     fontWeight: '600',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
 });
