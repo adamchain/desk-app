@@ -109,17 +109,17 @@ export default function DeskScene() {
   const deskWidth = isMobile ? screenWidth * 2.5 : screenWidth - 40; // Much wider on mobile
   const totalContentWidth = isMobile ? deskWidth + 40 : screenWidth;
   
-  // Heights
-  const whiteboardHeight = isMobile ? screenHeight * 0.35 : 180;
-  const deskHeight = isMobile ? screenHeight * 0.45 : 260;
+  // Heights - Increased desk height for more realistic proportions
+  const whiteboardHeight = isMobile ? screenHeight * 0.25 : 160; // Reduced whiteboard height
+  const deskHeight = isMobile ? screenHeight * 0.55 : 350; // Significantly increased desk height
   
   // Positioning
   const whiteboardX = 20;
-  const whiteboardY = isMobile ? 60 : Math.floor(screenHeight * 0.1);
+  const whiteboardY = isMobile ? 60 : Math.floor(screenHeight * 0.08);
   const deskX = 20;
-  const deskY = isMobile ? whiteboardY + whiteboardHeight + 20 : whiteboardY + whiteboardHeight + 20;
+  const deskY = isMobile ? whiteboardY + whiteboardHeight + 15 : whiteboardY + whiteboardHeight + 20;
 
-  // Bounds for desk items - much wider on mobile
+  // Bounds for desk items - much wider on mobile with increased height
   const deskBounds = {
     minX: 0,
     maxX: deskWidth - 80,
@@ -183,12 +183,12 @@ export default function DeskScene() {
           ]}
         >
           {/* File Cabinet - Fixed position on left side */}
-          <View style={[styles.cabinetContainer, { left: 20 }]}>
+          <View style={[styles.cabinetContainer, { left: 20, bottom: 60 }]}>
             <FileCabinet onPress={() => setShowFileCabinet(true)} />
           </View>
 
           {/* Pen - Positioned in left-center area */}
-          <View style={[styles.penContainer, { left: 180, top: 60 }]}>
+          <View style={[styles.penContainer, { left: 180, top: 80 }]}>
             <Pen onPress={addSticky} />
           </View>
 
@@ -197,7 +197,7 @@ export default function DeskScene() {
             fileTray={{
               ...fileTray,
               x: deskWidth - 180, // Position on right side
-              y: 40,
+              y: 60,
             }}
             onUpdate={updateFileTray}
             onPress={() => setShowFileTray(true)}
@@ -210,7 +210,7 @@ export default function DeskScene() {
             notepad={{
               ...notepad,
               x: 60,
-              y: 40,
+              y: 60,
             }}
             onUpdate={updateNotepad}
             onTearPage={addTornPage}
@@ -259,9 +259,9 @@ export default function DeskScene() {
             />
           ))}
 
-          {/* Add Button - positioned in center-right area */}
+          {/* Add Button - positioned in center-right area of the desk */}
           <TouchableOpacity
-            style={[styles.addButton, { right: 200 }]}
+            style={[styles.addButton, { right: 200, bottom: 40 }]}
             onPress={() => setShowAddModal(true)}
           >
             <MaterialIcons name="add" size={24} color="#FFF" />
@@ -311,7 +311,6 @@ const styles = StyleSheet.create({
   },
   cabinetContainer: {
     position: 'absolute',
-    bottom: 40,
     zIndex: 300,
   },
   penContainer: {
@@ -320,7 +319,6 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: 'absolute',
-    bottom: 20,
     width: 56,
     height: 56,
     borderRadius: 28,
