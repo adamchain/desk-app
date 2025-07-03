@@ -99,121 +99,168 @@ export default function DeskScene() {
     handleFileDrop,
   } = useDeskState();
 
-  // Desk surface dimensions (adjust as needed)
-  const deskWidth = screenWidth - 40; // 20px margin on each side
-  const deskHeight = 260; // Example height for a wide/horizontal desk
-  const deskX = 20; // left margin
-  const deskY = Math.floor(screenHeight * 0.45); // Move desk lower on the page
+  // Calculate dimensions based on platform
+  const isWeb = Platform.OS === 'web';
+  const isMobile = !isWeb;
+  
+  // For mobile: make content wider to enable horizontal scrolling
+  // For web: use full screen width
+  const contentWidth = isMobile ? screenWidth * 1.8 : screenWidth - 40;
+  const whiteboardWidth = isMobile ? contentWidth * 0.5 : contentWidth;
+  const deskWidth = isMobile ? contentWidth * 0.5 : contentWidth;
+  
+  // Heights
+  const whiteboardHeight = isMobile ? screenHeight * 0.4 : 180;
+  const deskHeight = isMobile ? screenHeight * 0.4 : 260;
+  
+  // Positioning
+  const whiteboardX = 20;
+  const deskX = isMobile ? whiteboardWidth + 40 : 20;
+  const topMargin = isMobile ? 60 : Math.floor(screenHeight * 0.1);
 
-  // Bounds for desk items (files, folders, etc.)
+  // Bounds for desk items
   const deskBounds = {
-    minX: deskX,
-    maxX: deskX + deskWidth - 80, // 80: max item width
-    minY: deskY,
-    maxY: deskY + deskHeight - 80, // 80: max item height
+    minX: 0,
+    maxX: deskWidth - 80,
+    minY: 0,
+    maxY: deskHeight - 80,
+  };
+
+  const whiteboardBounds = {
+    minX: 0,
+    maxX: whiteboardWidth - 80,
+    minY: 0,
+    maxY: whiteboardHeight - 80,
   };
 
   return (
     <View style={styles.container}>
-      {/* Whiteboard above the desk */}
-      <View
-        style={{
-          width: deskWidth,
-          height: 100, // Optionally reduce height
-          marginHorizontal: 20,
-          marginTop: deskY - 120, // Position whiteboard above desk
-        }}
-      >
-        <Whiteboard />
-      </View>
-      <View
-        style={[
-          styles.deskSurface,
+      <ScrollView
+        horizontal={isMobile}
+        showsHorizontalScrollIndicator={isMobile}
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
           {
-            width: deskWidth,
-            height: deskHeight,
-            marginHorizontal: 20,
-            marginTop: 0,
-            top: deskY, // Move desk down
-            overflow: 'hidden',
-          },
+            width: isMobile ? contentWidth + 40 : '100%',
+            minHeight: screenHeight,
+          }
         ]}
+        bounces={false}
       >
-        {/* File Cabinet - Fixed position */}
-        <View style={styles.cabinetContainer}>
-          <FileCabinet onPress={() => setShowFileCabinet(true)} />
-        </View>
-
-        {/* Pen - Fixed position */}
-        <View style={styles.penContainer}>
-          <Pen onPress={addSticky} />
-        </View>
-
-        {/* Draggable Items */}
-        {stickyNotes.map(note => (
-          <StickyNote
-            key={`sticky-${note.id}`}
-            note={note}
-            onUpdate={updateStickyNote}
-            onDelete={deleteStickyNote}
-            bounds={{ minX: 0, minY: 0, maxX: deskWidth - 80, maxY: deskHeight - 80 }}
-          />
-        ))}
-
-        {deskFiles.map(file => (
-          <DeskFile
-            key={`file-${file.id}`}
-            file={file}
-            onUpdate={updateDeskFile}
-            onDelete={deleteDeskFile}
-            bounds={deskBounds}
-          />
-        ))}
-
-        {deskFolders.map(folder => (
-          <DeskFolder
-            key={`folder-${folder.id}`}
-            folder={folder}
-            onUpdate={updateDeskFolder}
-            onDelete={deleteDeskFolder}
-            onPress={handleFolderPress}
-            bounds={deskBounds}
-          />
-        ))}
-
-        {tornPages.map(page => (
-          <TornPage
-            key={`page-${page.id}`}
-            page={page}
-            onUpdate={updateTornPage}
-            onDelete={deleteTornPage}
-            bounds={{ minX: 0, minY: 0, maxX: deskWidth - 100, maxY: deskHeight - 120 }}
-          />
-        ))}
-
-        <Notepad
-          notepad={notepad}
-          onUpdate={updateNotepad}
-          onTearPage={addTornPage}
-          bounds={{ minX: 0, minY: 0, maxX: deskWidth - 140, maxY: deskHeight - 180 }}
-        />
-
-        <FileTray
-          fileTray={fileTray}
-          onUpdate={updateFileTray}
-          onPress={() => setShowFileTray(true)}
-          isDropTarget={false}
-          onDrop={handleFileDrop}
-        />
-
-        {/* Add Button */}
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setShowAddModal(true)}
+        {/* Whiteboard Section */}
+        <View
+          style={[
+            styles.whiteboardContainer,
+            {
+              position: 'absolute',
+              left: whiteboardX,
+              top: topMargin,
+              width: whiteboardWidth,
+              height: whiteboardHeight,
+            }
+          ]}
         >
-          <MaterialIcons name="add" size={24} color="#FFF" />
-        </TouchableOpacity>
-      </View>
+          <Whiteboard />
+        </View>
+
+        {/* Desk Section */}
+        <View
+          style={[
+            styles.deskSurface,
+            {
+              position: 'absolute',
+              left: deskX,
+              top: topMargin + (isMobile ? 0 : whiteboardHeight + 20),
+              width: deskWidth,
+              height: deskHeight,
+            },
+          ]}
+        >
+          {/* File Cabinet - Fixed position */}
+          <View style={styles.cabinetContainer}>
+            <FileCabinet onPress={() => setShowFileCabinet(true)} />
+          </View>
+
+          {/* Pen - Fixed position */}
+          <View style={styles.penContainer}>
+            <Pen onPress={addSticky} />
+          </View>
+
+          {/* Draggable Items */}
+          {stickyNotes.map(note => (
+            <StickyNote
+              key={`sticky-${note.id}`}
+              note={note}
+              onUpdate={updateStickyNote}
+              onDelete={deleteStickyNote}
+              bounds={deskBounds}
+            />
+          ))}
+
+          {deskFiles.map(file => (
+            <DeskFile
+              key={`file-${file.id}`}
+              file={file}
+              onUpdate={updateDeskFile}
+              onDelete={deleteDeskFile}
+              bounds={deskBounds}
+            />
+          ))}
+
+          {deskFolders.map(folder => (
+            <DeskFolder
+              key={`folder-${folder.id}`}
+              folder={folder}
+              onUpdate={updateDeskFolder}
+              onDelete={deleteDeskFolder}
+              onPress={handleFolderPress}
+              bounds={deskBounds}
+            />
+          ))}
+
+          {tornPages.map(page => (
+            <TornPage
+              key={`page-${page.id}`}
+              page={page}
+              onUpdate={updateTornPage}
+              onDelete={deleteTornPage}
+              bounds={deskBounds}
+            />
+          ))}
+
+          <Notepad
+            notepad={notepad}
+            onUpdate={updateNotepad}
+            onTearPage={addTornPage}
+            bounds={deskBounds}
+          />
+
+          <FileTray
+            fileTray={fileTray}
+            onUpdate={updateFileTray}
+            onPress={() => setShowFileTray(true)}
+            isDropTarget={false}
+            onDrop={handleFileDrop}
+          />
+
+          {/* Add Button */}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddModal(true)}
+          >
+            <MaterialIcons name="add" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Mobile scroll indicator */}
+        {isMobile && (
+          <View style={styles.scrollIndicator}>
+            <Text style={styles.scrollIndicatorText}>← Swipe to explore →</Text>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -228,22 +275,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    position: 'relative',
+  },
+  whiteboardContainer: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   deskSurface: {
     backgroundColor: '#D2B48C',
     borderRadius: 20,
-    margin: 10,
     padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
-    position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    overflow: 'hidden', // Ensure overflow is hidden
+    overflow: 'hidden',
   },
   cabinetContainer: {
     position: 'absolute',
@@ -253,8 +303,8 @@ const styles = StyleSheet.create({
   },
   penContainer: {
     position: 'absolute',
-    top: 180,
-    left: 180,
+    top: 60,
+    left: 60,
     zIndex: 300,
   },
   addButton: {
@@ -273,5 +323,22 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     zIndex: 1000,
+  },
+  scrollIndicator: {
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  scrollIndicatorText: {
+    fontSize: 12,
+    color: '#8B4513',
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    fontWeight: '600',
   },
 });
