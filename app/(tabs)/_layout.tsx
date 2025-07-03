@@ -1,13 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Chrome as Home, Plus, Settings } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
-import { useState } from 'react';
-import AddItemModal from '../../components/AddItemModal';
-import { useDeskActions } from '../../components/DeskActionsContext';
+import { useDeskActions, useDeskState } from '../../components/DeskActionsContext';
 
 export default function TabsLayout() {
-  const [showAddModal, setShowAddModal] = useState(false);
   const { addFile, addFolder, addSticky } = useDeskActions();
+  const { showAddModal, setShowAddModal } = useDeskState();
 
   const handleAddFile = (name: string, type: string) => {
     addFile(name, type);
@@ -79,13 +77,6 @@ export default function TabsLayout() {
       >
         <Plus size={28} color="#8B4513" />
       </TouchableOpacity>
-      <AddItemModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onAddFile={handleAddFile}
-        onAddFolder={handleAddFolder}
-        onAddStickyNote={handleAddSticky}
-      />
     </>
   );
 }

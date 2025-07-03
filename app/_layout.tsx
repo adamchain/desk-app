@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useAuth } from '@/hooks/useAuth';
 import AuthScreen from '@/components/AuthScreen';
+import DeskProvider from '@/components/DeskProvider';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -25,12 +26,12 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <DeskProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
-    </>
+    </DeskProvider>
   );
 }
