@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Notepad from './Notepad';
@@ -134,22 +134,35 @@ export default function DeskScene() {
   const [isDragging, setIsDragging] = useState(false);
   const [maxZIndex, setMaxZIndex] = useState(200);
 
-  const getNextZIndex = () => {
-    setMaxZIndex(prev => prev + 1);
-    return maxZIndex + 1;
+  // Desk dimensions - horizontal layout taking bottom half of screen
+  const whiteboardHeight = screenHeight * 0.45; // 45% for whiteboard
+  const deskHeight = screenHeight * 0.45; // 45% for desk (10% for tabs)
+  const deskWidth = Platform.OS === 'web' ? screenWidth * 1.5 : screenWidth * 2; // Wider desk for scrolling
+
+  // Bounds for desk items
+  const deskBounds = {
+    minX: 20,
+    maxX: deskWidth - 100,
+    minY: 20,
+    maxY: deskHeight - 100,
   };
 
-  const updateStickyNote = (id: string, updates: Partial<StickyNoteData>) => {
+  const getNextZIndex = useCallback(() => {
+    setMaxZIndex(prev => prev + 1);
+    return maxZIndex + 1;
+  }, [maxZIndex]);
+
+  const updateStickyNote = useCallback((id: string, updates: Partial<StickyNoteData>) => {
     setStickyNotes(prev => prev.map(note =>
       note.id === id ? { ...note, ...updates, zIndex: updates.x !== undefined || updates.y !== undefined ? getNextZIndex() : note.zIndex } : note
     ));
-  };
+  }, [getNextZIndex]);
 
-  const deleteStickyNote = (id: string) => {
+  const deleteStickyNote = useCallback((id: string) => {
     setStickyNotes(prev => prev.filter(note => note.id !== id));
-  };
+  }, []);
 
-  const addStickyNote = () => {
+  const addStickyNote = useCallback(() => {
     const newNote: StickyNoteData = {
       id: Date.now().toString(),
       text: 'New note',
@@ -159,45 +172,45 @@ export default function DeskScene() {
       zIndex: getNextZIndex(),
     };
     setStickyNotes(prev => [...prev, newNote]);
-  };
+  }, [deskWidth, deskHeight, getNextZIndex]);
 
-  const updateDeskFile = (id: string, updates: Partial<DeskFileData>) => {
+  const updateDeskFile = useCallback((id: string, updates: Partial<DeskFileData>) => {
     setDeskFiles(prev => prev.map(file =>
       file.id === id ? { ...file, ...updates, zIndex: updates.x !== undefined || updates.y !== undefined ? getNextZIndex() : file.zIndex } : file
     ));
-  };
+  }, [getNextZIndex]);
 
-  const deleteDeskFile = (id: string) => {
+  const deleteDeskFile = useCallback((id: string) => {
     setDeskFiles(prev => prev.filter(file => file.id !== id));
-  };
+  }, []);
 
-  const updateDeskFolder = (id: string, updates: Partial<DeskFolderData>) => {
+  const updateDeskFolder = useCallback((id: string, updates: Partial<DeskFolderData>) => {
     setDeskFolders(prev => prev.map(folder =>
       folder.id === id ? { ...folder, ...updates, zIndex: updates.x !== undefined || updates.y !== undefined ? getNextZIndex() : folder.zIndex } : folder
     ));
-  };
+  }, [getNextZIndex]);
 
-  const deleteDeskFolder = (id: string) => {
+  const deleteDeskFolder = useCallback((id: string) => {
     setDeskFolders(prev => prev.filter(folder => folder.id !== id));
-  };
+  }, []);
 
-  const updateNotepad = (updates: Partial<NotepadData>) => {
+  const updateNotepad = useCallback((updates: Partial<NotepadData>) => {
     setNotepad(prev => ({
       ...prev,
       ...updates,
       zIndex: updates.x !== undefined || updates.y !== undefined ? getNextZIndex() : prev.zIndex
     }));
-  };
+  }, [getNextZIndex]);
 
-  const updateFileTray = (updates: Partial<FileTrayData>) => {
+  const updateFileTray = useCallback((updates: Partial<FileTrayData>) => {
     setFileTray(prev => ({
       ...prev,
       ...updates,
       zIndex: updates.x !== undefined || updates.y !== undefined ? getNextZIndex() : prev.zIndex
     }));
-  };
+  }, [getNextZIndex]);
 
-  const addTornPage = (text: string) => {
+  const addTornPage = useCallback((text: string) => {
     const newPage: TornPageData = {
       id: Date.now().toString(),
       text,
@@ -206,19 +219,19 @@ export default function DeskScene() {
       zIndex: getNextZIndex(),
     };
     setTornPages(prev => [...prev, newPage]);
-  };
+  }, [notepad.x, notepad.y, getNextZIndex]);
 
-  const updateTornPage = (id: string, updates: Partial<TornPageData>) => {
+  const updateTornPage = useCallback((id: string, updates: Partial<TornPageData>) => {
     setTornPages(prev => prev.map(page =>
       page.id === id ? { ...page, ...updates, zIndex: updates.x !== undefined || updates.y !== undefined ? getNextZIndex() : page.zIndex } : page
     ));
-  };
+  }, [getNextZIndex]);
 
-  const deleteTornPage = (id: string) => {
+  const deleteTornPage = useCallback((id: string) => {
     setTornPages(prev => prev.filter(page => page.id !== id));
-  };
+  }, []);
 
-  const addNewFile = (name: string, type: string) => {
+  const addNewFile = useCallback((name: string, type: string) => {
     const safeName = typeof name === 'string' ? name : '';
     const newFile: DeskFileData = {
       id: Date.now().toString(),
@@ -231,9 +244,9 @@ export default function DeskScene() {
       zIndex: getNextZIndex(),
     };
     setDeskFiles(prev => [...prev, newFile]);
-  };
+  }, [deskWidth, deskHeight, getNextZIndex]);
 
-  const addNewFolder = (name: string) => {
+  const addNewFolder = useCallback((name: string) => {
     const newFolder: DeskFolderData = {
       id: Date.now().toString(),
       name,
@@ -243,7 +256,7 @@ export default function DeskScene() {
       files: [],
     };
     setDeskFolders(prev => [...prev, newFolder]);
-  };
+  }, [deskWidth, deskHeight, getNextZIndex]);
 
   // Register add functions with context
   const deskActions = useContext(DeskActionsContext);
@@ -252,20 +265,13 @@ export default function DeskScene() {
     if (deskActions.setAddFile) deskActions.setAddFile(addNewFile);
     if (deskActions.setAddFolder) deskActions.setAddFolder(addNewFolder);
     if (deskActions.setAddSticky) deskActions.setAddSticky(addStickyNote);
-  }, [
-    deskActions?.setAddFile,
-    deskActions?.setAddFolder,
-    deskActions?.setAddSticky,
-    addNewFile,
-    addNewFolder,
-    addStickyNote,
-  ]);
+  }, [deskActions, addNewFile, addNewFolder, addStickyNote]);
 
-  const handleFolderPress = (folder: DeskFolderData) => {
+  const handleFolderPress = useCallback((folder: DeskFolderData) => {
     setSelectedFolder(folder);
-  };
+  }, []);
 
-  const handleFileDrop = (file: DeskFileData, target: string) => {
+  const handleFileDrop = useCallback((file: DeskFileData, target: string) => {
     if (target === 'filetray') {
       const fileData: FileData = {
         name: file.name,
@@ -281,31 +287,18 @@ export default function DeskScene() {
 
       deleteDeskFile(file.id);
     }
-  };
+  }, [deleteDeskFile]);
 
-  const handleFileImported = (file: FileData) => {
+  const handleFileImported = useCallback((file: FileData) => {
     setFileTray(prev => ({
       ...prev,
       files: [file, ...prev.files],
     }));
-  };
+  }, []);
 
-  const handleLongTermFileImported = (file: FileData) => {
+  const handleLongTermFileImported = useCallback((file: FileData) => {
     setLongTermFiles(prev => [file, ...prev]);
-  };
-
-  // Desk dimensions - horizontal layout taking bottom half of screen
-  const whiteboardHeight = screenHeight * 0.45; // 45% for whiteboard
-  const deskHeight = screenHeight * 0.45; // 45% for desk (10% for tabs)
-  const deskWidth = Platform.OS === 'web' ? screenWidth * 1.5 : screenWidth * 2; // Wider desk for scrolling
-
-  // Bounds for desk items
-  const deskBounds = {
-    minX: 20,
-    maxX: deskWidth - 100,
-    minY: 20,
-    maxY: deskHeight - 100,
-  };
+  }, []);
 
   return (
     <View style={styles.container}>
