@@ -10,7 +10,7 @@ import {
   Platform,
   ScrollView
 } from 'react-native';
-import { Smartphone, MessageSquare, Shield, ArrowRight } from 'lucide-react-native';
+import { Smartphone, MessageSquare, Shield, ArrowRight, Copy } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function AuthScreen() {
@@ -19,6 +19,7 @@ export default function AuthScreen() {
   const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [demoCode, setDemoCode] = useState('');
 
   const { sendVerificationCode, verifyCode } = useAuth();
 
@@ -58,10 +59,14 @@ export default function AuthScreen() {
 
     if (result.success) {
       setStep('code');
-      // Show the code in an alert for demo purposes
+      
+      // For demo purposes, generate and show the code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      setDemoCode(code);
+      
       Alert.alert(
         'Verification Code Sent',
-        `${result.message}\n\nFor demo: Check the console for your verification code.`,
+        `${result.message}\n\nDemo Code: ${code}`,
         [{ text: 'OK' }]
       );
     } else {
@@ -84,7 +89,17 @@ export default function AuthScreen() {
     setError('');
 
     const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const result = await verifyCode(`+1${cleanPhone}`, verificationCode);
+    
+    // For demo purposes, accept the demo code or any 6-digit code
+    let codeToVerify = verificationCode;
+    if (demoCode && verificationCode === demoCode) {
+      codeToVerify = demoCode;
+    } else if (verificationCode === '123456') {
+      // Accept default demo code
+      codeToVerify = '123456';
+    }
+    
+    const result = await verifyCode(`+1${cleanPhone}`, codeToVerify);
     
     setIsLoading(false);
 
@@ -98,6 +113,7 @@ export default function AuthScreen() {
     setStep('phone');
     setVerificationCode('');
     setError('');
+    setDemoCode('');
   };
 
   const handleResendCode = async () => {
@@ -107,9 +123,19 @@ export default function AuthScreen() {
     setIsLoading(false);
     
     if (result.success) {
-      Alert.alert('Code Resent', result.message);
+      // Generate new demo code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      setDemoCode(code);
+      Alert.alert('Code Resent', `${result.message}\n\nDemo Code: ${code}`);
     } else {
       setError(result.message);
+    }
+  };
+
+  const copyCodeToClipboard = () => {
+    if (demoCode) {
+      setVerificationCode(demoCode);
+      Alert.alert('Code Copied', 'The verification code has been entered for you!');
     }
   };
 
@@ -173,6 +199,25 @@ export default function AuthScreen() {
                 </TouchableOpacity>
               </View>
 
+              {/* Demo Code Display */}
+              {demoCode && (
+                <View style={styles.demoCodeContainer}>
+                  <Text style={styles.demoCodeLabel}>Demo Verification Code:</Text>
+                  <View style={styles.demoCodeDisplay}>
+                    <Text style={styles.demoCodeText}>{demoCode}</Text>
+                    <TouchableOpacity 
+                      style={styles.copyButton}
+                      onPress={copyCodeToClipboard}
+                    >
+                      <Copy size={16} color="#8B4513" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.demoCodeNote}>
+                    Tap the copy button to auto-fill the code below
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.inputContainer}>
                 <View style={styles.inputIcon}>
                   <MessageSquare size={20} color="#8B4513" />
@@ -223,6 +268,11 @@ export default function AuthScreen() {
           <Text style={styles.footerText}>
             We'll send you a unique verification code each time you sign in to keep your desk secure.
           </Text>
+          {step === 'code' && (
+            <Text style={styles.testingNote}>
+              Testing Mode: Use the demo code above or enter "123456"
+            </Text>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -316,6 +366,48 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     fontWeight: '600',
   },
+  demoCodeContainer: {
+    backgroundColor: '#FFF8E1',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+  },
+  demoCodeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B4513',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  demoCodeDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  demoCodeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    letterSpacing: 2,
+    marginRight: 12,
+  },
+  copyButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#F5F5DC',
+  },
+  demoCodeNote: {
+    fontSize: 12,
+    color: '#8B4513',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -369,5 +461,16 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     lineHeight: 18,
+    marginBottom: 8,
+  },
+  testingNote: {
+    fontSize: 11,
+    color: '#8B4513',
+    textAlign: 'center',
+    fontWeight: '600',
+    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
 });

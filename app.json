@@ -12,7 +12,10 @@
       "bundleIdentifier": "com.deskapp.deskapp",
       "supportsTablet": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "This app uses the camera to capture and import documents to your desk.",
+        "NSMicrophoneUsageDescription": "This app may use the microphone for voice notes and document scanning features.",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to import images and documents to your desk."
       }
     },
     "web": {

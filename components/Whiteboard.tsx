@@ -122,85 +122,45 @@ export default function Whiteboard() {
 
   const colors = ['#2C3E50', '#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6'];
 
-  // Render drawing using Canvas-like approach for better mobile compatibility
+  // Safe rendering that works on all platforms
   const renderDrawing = () => {
-    if (Platform.OS === 'web') {
-      // Use SVG for web
-      try {
-        const Svg = require('react-native-svg').default;
-        const { Polyline, Text: SvgText } = require('react-native-svg');
-
-        return (
-          <Svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
-            {/* Render completed lines */}
-            {lines.map((line, i) => (
-              <Polyline
-                key={i}
-                fill="none"
-                stroke={line.color}
-                strokeWidth={line.width}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={line.points.map(p => `${p.x},${p.y}`).join(' ')}
-              />
-            ))}
-            
-            {/* Render current line being drawn */}
-            {currentLine && (
-              <Polyline
-                fill="none"
-                stroke={currentLine.color}
-                strokeWidth={currentLine.width}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={currentLine.points.map(p => `${p.x},${p.y}`).join(' ')}
-              />
-            )}
-            
-            {/* Render text elements */}
-            {textElements.map((element) => (
-              <SvgText
-                key={element.id}
-                x={element.x}
-                y={element.y}
-                fontSize="18"
-                fontWeight="600"
-                fill="#2C3E50"
-              >
-                {element.text}
-              </SvgText>
-            ))}
-          </Svg>
-        );
-      } catch (error) {
-        console.warn('SVG rendering failed, falling back to simple view');
-        return renderFallback();
-      }
-    } else {
-      // Use fallback for mobile to avoid SVG issues
-      return renderFallback();
-    }
-  };
-
-  const renderFallback = () => {
     return (
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-        {/* Simple visual feedback for mobile */}
-        {lines.map((line, i) => (
+        {/* Render completed lines as dots for mobile compatibility */}
+        {lines.map((line, i) => 
+          line.points.map((point, j) => (
+            <View
+              key={`${i}-${j}`}
+              style={{
+                position: 'absolute',
+                left: point.x - line.width / 2,
+                top: point.y - line.width / 2,
+                width: line.width,
+                height: line.width,
+                backgroundColor: line.color,
+                borderRadius: line.width / 2,
+              }}
+            />
+          ))
+        )}
+        
+        {/* Render current line being drawn */}
+        {currentLine && currentLine.points.map((point, j) => (
           <View
-            key={i}
+            key={`current-${j}`}
             style={{
               position: 'absolute',
-              left: line.points[0]?.x || 0,
-              top: line.points[0]?.y || 0,
-              width: 4,
-              height: 4,
-              backgroundColor: line.color,
-              borderRadius: 2,
+              left: point.x - currentLine.width / 2,
+              top: point.y - currentLine.width / 2,
+              width: currentLine.width,
+              height: currentLine.width,
+              backgroundColor: currentLine.color,
+              borderRadius: currentLine.width / 2,
             }}
           />
         ))}
         
+        {/* Render text elements */}
         {textElements.map((element) => (
           <Text
             key={element.id}
