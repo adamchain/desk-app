@@ -74,22 +74,22 @@ export interface FileTrayData {
 
 export default function DeskScene() {
   const [stickyNotes, setStickyNotes] = useState<StickyNoteData[]>([
-    { id: '1', text: 'Call client at 3pm', color: 'urgent', x: 50, y: 150, zIndex: 1 },
-    { id: '2', text: 'Review proposal', color: 'normal', x: 200, y: 200, zIndex: 2 },
-    { id: '3', text: 'Order supplies', color: 'low', x: 120, y: 320, zIndex: 3 },
+    { id: '1', text: 'Call client at 3pm', color: 'urgent', x: 50, y: 50, zIndex: 1 },
+    { id: '2', text: 'Review proposal', color: 'normal', x: 200, y: 80, zIndex: 2 },
+    { id: '3', text: 'Order supplies', color: 'low', x: 350, y: 60, zIndex: 3 },
   ]);
 
   const [deskFiles, setDeskFiles] = useState<DeskFileData[]>([
-    { id: '1', name: 'Contract.pdf', type: 'PDF Document', size: '245 KB', date: 'Today', x: 280, y: 180, zIndex: 4 },
-    { id: '2', name: 'Report.docx', type: 'Word Document', size: '89 KB', date: 'Yesterday', x: 160, y: 280, zIndex: 5 },
+    { id: '1', name: 'Contract.pdf', type: 'PDF Document', size: '245 KB', date: 'Today', x: 150, y: 120, zIndex: 4 },
+    { id: '2', name: 'Report.docx', type: 'Word Document', size: '89 KB', date: 'Yesterday', x: 300, y: 140, zIndex: 5 },
   ]);
 
   const [deskFolders, setDeskFolders] = useState<DeskFolderData[]>([
     {
       id: '1',
       name: 'Project Alpha',
-      x: 240,
-      y: 120,
+      x: 450,
+      y: 100,
       zIndex: 6,
       files: [
         { name: 'Proposal.pdf', type: 'PDF Document', size: '1.2 MB', date: 'Today' },
@@ -102,7 +102,7 @@ export default function DeskScene() {
 
   const [notepad, setNotepad] = useState<NotepadData>({
     id: 'notepad-1',
-    x: 30,
+    x: 600,
     y: 40,
     zIndex: 100,
     notes: 'Welcome to your desk!\n\nTap items to interact:\n• Yellow notepad for daily notes\n• Sticky notes for quick reminders\n• Manila folder for quick access files\n• File cabinet for long-term storage\n• Pen to add new sticky notes'
@@ -110,8 +110,8 @@ export default function DeskScene() {
 
   const [fileTray, setFileTray] = useState<FileTrayData>({
     id: 'filetray-1',
-    x: screenWidth - 160,
-    y: 220,
+    x: 800,
+    y: 80,
     zIndex: 100,
     files: [
       { name: 'Invoice.pdf', type: 'PDF Document', size: '245 KB', date: 'Today' },
@@ -134,9 +134,6 @@ export default function DeskScene() {
   const [isDragging, setIsDragging] = useState(false);
   const [maxZIndex, setMaxZIndex] = useState(200);
 
-  // Zoom and pan state for mobile
-  const [zoomLevel, setZoomLevel] = useState(Platform.OS === 'web' ? 1 : 0.7);
-
   const getNextZIndex = () => {
     setMaxZIndex(prev => prev + 1);
     return maxZIndex + 1;
@@ -157,8 +154,8 @@ export default function DeskScene() {
       id: Date.now().toString(),
       text: 'New note',
       color: 'normal',
-      x: Math.random() * (screenWidth - 100),
-      y: Math.random() * (screenHeight - 200) + 100,
+      x: Math.random() * (deskWidth - 100) + 20,
+      y: Math.random() * (deskHeight - 100) + 20,
       zIndex: getNextZIndex(),
     };
     setStickyNotes(prev => [...prev, newNote]);
@@ -222,7 +219,6 @@ export default function DeskScene() {
   };
 
   const addNewFile = (name: string, type: string) => {
-    // Defensive: ensure name is a string
     const safeName = typeof name === 'string' ? name : '';
     const newFile: DeskFileData = {
       id: Date.now().toString(),
@@ -230,8 +226,8 @@ export default function DeskScene() {
       type: typeof type === 'string' ? type : 'Document',
       size: '0 KB',
       date: 'Just now',
-      x: Math.random() * (screenWidth - 120) + 60,
-      y: Math.random() * (screenHeight - 300) + 150,
+      x: Math.random() * (deskWidth - 120) + 60,
+      y: Math.random() * (deskHeight - 100) + 20,
       zIndex: getNextZIndex(),
     };
     setDeskFiles(prev => [...prev, newFile]);
@@ -241,8 +237,8 @@ export default function DeskScene() {
     const newFolder: DeskFolderData = {
       id: Date.now().toString(),
       name,
-      x: Math.random() * (screenWidth - 120) + 60,
-      y: Math.random() * (screenHeight - 300) + 150,
+      x: Math.random() * (deskWidth - 120) + 60,
+      y: Math.random() * (deskHeight - 100) + 20,
       zIndex: getNextZIndex(),
       files: [],
     };
@@ -256,7 +252,6 @@ export default function DeskScene() {
     if (deskActions.setAddFile) deskActions.setAddFile(addNewFile);
     if (deskActions.setAddFolder) deskActions.setAddFolder(addNewFolder);
     if (deskActions.setAddSticky) deskActions.setAddSticky(addStickyNote);
-    // No cleanup needed
   }, [
     deskActions?.setAddFile,
     deskActions?.setAddFolder,
@@ -299,124 +294,116 @@ export default function DeskScene() {
     setLongTermFiles(prev => [file, ...prev]);
   };
 
-  // Desk surface dimensions (adjust as needed)
-  const deskWidth = screenWidth - 40; // 20px margin on each side
-  const deskHeight = 260; // Example height for a wide/horizontal desk
-  const deskX = 20; // left margin
-  const deskY = Math.floor(screenHeight * 0.45); // Move desk lower on the page
+  // Desk dimensions - horizontal layout taking bottom half of screen
+  const whiteboardHeight = screenHeight * 0.45; // 45% for whiteboard
+  const deskHeight = screenHeight * 0.45; // 45% for desk (10% for tabs)
+  const deskWidth = Platform.OS === 'web' ? screenWidth * 1.5 : screenWidth * 2; // Wider desk for scrolling
 
-  // Bounds for desk items (files, folders, etc.)
+  // Bounds for desk items
   const deskBounds = {
-    minX: deskX,
-    maxX: deskX + deskWidth - 80, // 80: max item width
-    minY: deskY,
-    maxY: deskY + deskHeight - 80, // 80: max item height
+    minX: 20,
+    maxX: deskWidth - 100,
+    minY: 20,
+    maxY: deskHeight - 100,
   };
 
   return (
     <View style={styles.container}>
-      {/* Whiteboard above the desk */}
-      <View
-        style={{
-          width: deskWidth,
-          height: 100, // Optionally reduce height
-          marginHorizontal: 20,
-          marginTop: deskY - 120, // Position whiteboard above desk
-        }}
-      >
+      {/* Whiteboard - Top half */}
+      <View style={[styles.whiteboardContainer, { height: whiteboardHeight }]}>
         <Whiteboard />
       </View>
-      <View
-        style={[
-          styles.deskSurface,
-          {
-            width: deskWidth,
-            height: deskHeight,
-            marginHorizontal: 20,
-            marginTop: 0,
-            top: deskY, // Move desk down
-            overflow: 'hidden',
-          },
-        ]}
-      >
-        {/* File Cabinet - Fixed position */}
-        <View style={styles.cabinetContainer}>
-          <FileCabinet onPress={() => setShowFileCabinet(true)} />
-        </View>
 
-        {/* Pen - Fixed position */}
-        <View style={styles.penContainer}>
-          <Pen onPress={addStickyNote} />
-        </View>
-
-        {/* Draggable Items */}
-        {stickyNotes.map(note => (
-          <StickyNote
-            key={`sticky-${note.id}`}
-            note={note}
-            onUpdate={updateStickyNote}
-            onDelete={deleteStickyNote}
-            bounds={{ minX: 0, minY: 0, maxX: deskWidth - 80, maxY: deskHeight - 80 }}
-          />
-        ))}
-
-        {deskFiles.map(file => (
-          <DeskFile
-            key={`file-${file.id}`}
-            file={file}
-            onUpdate={updateDeskFile}
-            onDelete={deleteDeskFile}
-            bounds={deskBounds}
-          />
-        ))}
-
-        {deskFolders.map(folder => (
-          <DeskFolder
-            key={`folder-${folder.id}`}
-            folder={folder}
-            onUpdate={updateDeskFolder}
-            onDelete={deleteDeskFolder}
-            onPress={handleFolderPress}
-            bounds={deskBounds}
-          />
-        ))}
-
-        {tornPages.map(page => (
-          <TornPage
-            key={`page-${page.id}`}
-            page={page}
-            onUpdate={updateTornPage}
-            onDelete={deleteTornPage}
-            bounds={{ minX: 0, minY: 0, maxX: deskWidth - 100, maxY: deskHeight - 120 }}
-          />
-        ))}
-
-        <Notepad
-          notepad={notepad}
-          onUpdate={updateNotepad}
-          onTearPage={addTornPage}
-          bounds={{ minX: 0, minY: 0, maxX: deskWidth - 140, maxY: deskHeight - 180 }}
-        />
-
-        <FileTray
-          fileTray={fileTray}
-          onUpdate={updateFileTray}
-          onPress={() => setShowFileTray(true)}
-          isDropTarget={isDragging}
-          onDrop={handleFileDrop}
-        />
-
-        {/* Add Button */}
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setShowAddModal(true)}
+      {/* Desk - Bottom half */}
+      <View style={[styles.deskContainer, { height: deskHeight }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={Platform.OS !== 'web'}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ width: deskWidth }}
+          style={styles.deskScrollView}
         >
-          <MaterialIcons name="add" size={24} color="#FFF" />
-        </TouchableOpacity>
-      </View>
-      {/* Modals */}
+          <View style={[styles.deskSurface, { width: deskWidth, height: deskHeight - 20 }]}>
+            {/* File Cabinet - Fixed position on left */}
+            <View style={styles.cabinetContainer}>
+              <FileCabinet onPress={() => setShowFileCabinet(true)} />
+            </View>
 
-      {/* File Tray Modal */}
+            {/* Pen - Fixed position */}
+            <View style={styles.penContainer}>
+              <Pen onPress={addStickyNote} />
+            </View>
+
+            {/* Draggable Items */}
+            {stickyNotes.map(note => (
+              <StickyNote
+                key={`sticky-${note.id}`}
+                note={note}
+                onUpdate={updateStickyNote}
+                onDelete={deleteStickyNote}
+                bounds={deskBounds}
+              />
+            ))}
+
+            {deskFiles.map(file => (
+              <DeskFile
+                key={`file-${file.id}`}
+                file={file}
+                onUpdate={updateDeskFile}
+                onDelete={deleteDeskFile}
+                bounds={deskBounds}
+              />
+            ))}
+
+            {deskFolders.map(folder => (
+              <DeskFolder
+                key={`folder-${folder.id}`}
+                folder={folder}
+                onUpdate={updateDeskFolder}
+                onDelete={deleteDeskFolder}
+                onPress={handleFolderPress}
+                bounds={deskBounds}
+              />
+            ))}
+
+            {tornPages.map(page => (
+              <TornPage
+                key={`page-${page.id}`}
+                page={page}
+                onUpdate={updateTornPage}
+                onDelete={deleteTornPage}
+                bounds={deskBounds}
+              />
+            ))}
+
+            <Notepad
+              notepad={notepad}
+              onUpdate={updateNotepad}
+              onTearPage={addTornPage}
+              bounds={deskBounds}
+            />
+
+            <FileTray
+              fileTray={fileTray}
+              onUpdate={updateFileTray}
+              onPress={() => setShowFileTray(true)}
+              isDropTarget={isDragging}
+              onDrop={handleFileDrop}
+              bounds={deskBounds}
+            />
+
+            {/* Add Button */}
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setShowAddModal(true)}
+            >
+              <MaterialIcons name="add" size={24} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* Modals */}
       <FileModal
         visible={showFileTray}
         title="File Tray - Quick Access"
@@ -426,7 +413,6 @@ export default function DeskScene() {
         allowImport={true}
       />
 
-      {/* File Cabinet Modal */}
       <FileModal
         visible={showFileCabinet}
         title="File Cabinet - Long-Term Storage"
@@ -436,7 +422,6 @@ export default function DeskScene() {
         allowImport={true}
       />
 
-      {/* Folder Modal */}
       {selectedFolder && (
         <FileModal
           visible={!!selectedFolder}
@@ -446,7 +431,6 @@ export default function DeskScene() {
         />
       )}
 
-      {/* Add Item Modal */}
       <AddItemModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -463,11 +447,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5DC',
   },
-  scrollView: {
+  whiteboardContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  deskContainer: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
+  deskScrollView: {
+    flex: 1,
   },
   deskSurface: {
     backgroundColor: '#D2B48C',
@@ -480,21 +469,18 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
     position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    overflow: 'hidden', // Ensure overflow is hidden
+    minHeight: 200,
   },
   cabinetContainer: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 20,
     left: 20,
     zIndex: 300,
   },
   penContainer: {
     position: 'absolute',
-    top: 180,
-    left: 180,
+    top: 60,
+    left: 200,
     zIndex: 300,
   },
   addButton: {
