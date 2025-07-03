@@ -12,13 +12,13 @@ interface FolderSelectionModalProps {
   draggedItemName: string;
 }
 
-export default function FolderSelectionModal({ 
-  visible, 
-  folders, 
-  onClose, 
-  onSelectFolder, 
+export default function FolderSelectionModal({
+  visible,
+  folders,
+  onClose,
+  onSelectFolder,
   onCreateFolder,
-  draggedItemName 
+  draggedItemName
 }: FolderSelectionModalProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -71,7 +71,7 @@ export default function FolderSelectionModal({
                 autoFocus
               />
               <View style={styles.formButtons}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => {
                     setShowCreateForm(false);
@@ -80,7 +80,7 @@ export default function FolderSelectionModal({
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.createButton, !newFolderName.trim() && styles.disabledButton]}
                   onPress={handleCreateFolder}
                   disabled={!newFolderName.trim()}

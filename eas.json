@@ -1,0 +1,25 @@
+{
+    "build": {
+        "development": {
+            "developmentClient": true,
+            "distribution": "internal"
+        },
+        "preview": {
+            "distribution": "internal"
+        },
+        "production": {
+            "autoIncrement": true
+        }
+    },
+    "submit": {
+        "production": {
+            "ios": {
+                "appleId": "adam.chain@yahoo.com",
+                "ascAppId": "6748156717"
+            }
+        }
+    },
+    "cli": {
+        "appVersionSource": "remote"
+    }
+}
